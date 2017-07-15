@@ -9,7 +9,7 @@
     <version>1.0</version>
 
     <dependencies>
-        ß
+
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>

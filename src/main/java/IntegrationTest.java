@@ -39,6 +39,7 @@ import static org.mockserver.model.HttpResponse.response;
 public class IntegrationTest {
     private ClientAndServer mockServer;
     final String shopifyStoreName = "nearsoft5cgw";
+    final String resourcePath = "src/main/resources/";
 
     @Before
     public void startServer(){
@@ -89,7 +90,7 @@ public class IntegrationTest {
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400")
                                 )
-                                .withBody(getJsonResponse("jsons/token_response.json"))
+                                .withBody(getJsonResponse(resourcePath + "token_response.json"))
                 );
     }
 
@@ -110,7 +111,7 @@ public class IntegrationTest {
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400")
                                 )
-                                .withBody(getJsonResponse("jsons/subscription_request_create_response.json"))
+                                .withBody(getJsonResponse(resourcePath + "subscription_request_create_response.json"))
 
                 );
         client
@@ -129,7 +130,7 @@ public class IntegrationTest {
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400")
                                 )
-                                .withBody(getJsonResponse("jsons/subscription_request_update_response.json"))
+                                .withBody(getJsonResponse(resourcePath + "subscription_request_update_response.json"))
 
                 );
     }
@@ -152,7 +153,7 @@ public class IntegrationTest {
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400")
                                 )
-                                .withBody(getJsonResponse("jsons/activate_subscription_response_1.json"))
+                                .withBody(getJsonResponse(resourcePath + "activate_subscription_response_1.json"))
 
 
                 );
@@ -172,9 +173,7 @@ public class IntegrationTest {
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400")
                                 )
-                                .withBody(getJsonResponse("jsons/activate_subscription_response_2.json"))
-
-
+                                .withBody(getJsonResponse(resourcePath + "activate_subscription_response_2.json"))
                 );
     }
 
