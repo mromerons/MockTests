@@ -1,0 +1,10 @@
+{
+    "orgName": "nearsoft5cgw",
+    "apiKey": "48c2accff766e2dd3622ea3d7b3fd73d",
+    "apiSecret": "ddd7e38beba5e3edbf4aafbc3c3647d8141ae124",
+    "shopifyOauthToken": "1a1c14452e73a7a4807dcbb461b46995",
+    "shopifyShopName": "shopyqa1",
+    "eventType": "product.created, product.updated",
+    "venzeeIntegrationId": "48c2accff766e2dd3622ea3d7b3fd73d",
+    "collectionId": "FJCCQTG3AB"
+}
