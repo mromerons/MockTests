@@ -1,39 +1,26 @@
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockserver.client.server.MockServerClient;
-import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.matchers.MatchType;
-import org.mockserver.mockserver.MockServer;
-import org.mockserver.model.Body;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpStatusCode;
 import org.mockserver.model.JsonBody;
-import org.mockserver.model.Parameter;
-import org.mockserver.model.ParameterBody;
-import org.mockserver.model.RegexBody;
 
-import io.netty.handler.codec.http.HttpResponse;
-
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Iterator;
-
-import javax.xml.ws.Response;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.integration.ClientAndProxy.startClientAndProxy;
-import static org.mockserver.matchers.Times.exactly;
+import static org.mockserver.matchers.Times.once;
 import static org.mockserver.matchers.Times.unlimited;
+import static org.mockserver.model.HttpClassCallback.callback;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+///import static org.mockserver.configuration.ConfigurationProperties.overrideLogLevel;
+//import org.mockserver.configuration.ConfigurationProperties;
+
 //import static org.mockserver.model.HttpStatusCode.*;
 
 public class IntegrationTest {
@@ -43,7 +30,10 @@ public class IntegrationTest {
 
     @Before
     public void startServer(){
+        //org.mockserver.configuration.ConfigurationProperties.overrideLogLevel("OFF");
         mockServer = startClientAndServer(1080);
+        //mockServer.reset();
+
         System.out.println("Mock Server started");
     }
 
@@ -53,11 +43,19 @@ public class IntegrationTest {
         System.out.println("Mock Server stopped");
     }
 
+    /*
+    @Test
+    public void TestCallback(){
+        generateCustomResponseFiles();
+        while(true){ }
+    }
+    */
+
     @Test
     public void integrationTests() throws IOException{
-        mapGenerateToken("GENERATE_TOKEN", mockServer);     //GENERATE TOKEN
+        //mapGenerateToken("GENERATE_TOKEN", mockServer);     //GENERATE TOKEN
         mapCreateSubscription("CREATE_SUBSCRIPTION", mockServer);     //CREATE SUBSCRIPTION
-        mapActivateSubscription("ACTIVATE_SUBSCRIPTION", mockServer);     //ACTIVATE SUBSCRIPTION
+        //mapActivateSubscription("ACTIVATE_SUBSCRIPTION", mockServer);     //ACTIVATE SUBSCRIPTION
 
         // JUST FOR TEST PURPOSES
         while (true) {   }
@@ -74,6 +72,7 @@ public class IntegrationTest {
     }
     */
 
+    /*
     private void mapGenerateToken(final String operation, MockServerClient client) throws IOException {
         client
                 .when(
@@ -93,8 +92,40 @@ public class IntegrationTest {
                                 .withBody(getJsonResponse(resourcePath + "token_response.json"))
                 );
     }
+    */
 
     private void mapCreateSubscription(final String operation, MockServerClient client) throws IOException {
+        //client.clear(request().withPath("/api/orgs/".concat(shopifyStoreName).concat("/subscriptions")));
+        client
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/api/orgs/".concat(shopifyStoreName).concat("/subscriptions"))
+                                //.withBody(new JsonBody("{eventName: 'product.created'}", MatchType.ONLY_MATCHING_FIELDS))
+                        ,
+                        //once()
+                        unlimited()
+                )
+                .callback(
+                        callback()
+                                .withCallbackClass("CreateSubscriptionCallback")
+
+                );
+        //client.reset();
+                 /*
+                .respond(
+                        response()
+                                .withStatusCode(HttpStatusCode.OK_200.code())
+                                .withHeaders(
+                                        new Header("Content-Type", "application/json; charset=utf-8"),
+                                        new Header("Cache-Control", "public, max-age=86400")
+                                )
+                                .withBody(getJsonResponse(resourcePath + "subscription_request_create_response.json"))
+
+                );
+                */
+
+        /*
         client
                 .when(
                         request()
@@ -114,6 +145,9 @@ public class IntegrationTest {
                                 .withBody(getJsonResponse(resourcePath + "subscription_request_create_response.json"))
 
                 );
+        */
+
+        /*
         client
                 .when(
                         request()
@@ -133,10 +167,12 @@ public class IntegrationTest {
                                 .withBody(getJsonResponse(resourcePath + "subscription_request_update_response.json"))
 
                 );
+        */
     }
 
-
+    /*
     private void mapActivateSubscription(final String operation, MockServerClient client) throws IOException {
+        //generateCustomResponseFiles();
         client
                 .when(
                         request()
@@ -157,6 +193,7 @@ public class IntegrationTest {
 
 
                 );
+        /*
         client
                 .when(
                         request()
@@ -175,7 +212,9 @@ public class IntegrationTest {
                                 )
                                 .withBody(getJsonResponse(resourcePath + "activate_subscription_response_2.json"))
                 );
+        *-/
     }
+    */
 
 
     public static String getJsonResponse(String resourceName){
@@ -193,12 +232,27 @@ public class IntegrationTest {
         return response;
     }
 
-
+    /*
     public void generateCustomResponseFiles(){
         //TODO: Change parameters in response files to make an accurate mock test
 
         String targetUrl = "";
         int integrationId = 0;
+
+        mockServer
+                .when(
+                        request()
+                                //.withPath("/callback")
+                )
+                .callback(
+                        callback()
+                                .withCallbackClass("TestExpectationCallback")
+
+                );
+
+
+
+        //HttpCallback httpClassCallback = callback("org.some.package.MyCallback");
 
         //"targetUrl" : "http://localhost:8080/integrations/shopify/1499231379880/items",
 
@@ -211,6 +265,7 @@ public class IntegrationTest {
         //"jsons/activate_subscription_response_1.json"
         //"jsons/activate_subscription_response_2.json"
     }
+    */
 
 
 
