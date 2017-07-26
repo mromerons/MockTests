@@ -1,0 +1,12 @@
+{
+  "orgName": "nearsoft5cgw",
+  "apiKey": "48c2accff766e2dd3622ea3d7b3fd73d",
+  "apiSecret": "ddd7e38beba5e3edbf4aafbc3c3647d8141ae124",
+  "authObj":  {
+    "oauthToken": "ddd7e38beba5e3edbf4aafbc3c3647d8141ae124",
+    "shopName": "shopyqa4"
+  },
+  "eventType": "product.created, product.updated",
+  "venzeeIntegrationId": "48c2accff766e2dd3622ea3d7b3fd73d",
+  "collectionId": "TIT2JGCTGC"
+}
