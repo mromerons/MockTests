@@ -6,12 +6,15 @@ import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 
+import java.time.LocalDateTime;
+
 import static org.mockserver.model.HttpStatusCode.OK_200;
 
 /**
  * Created by mromero on 7/19/17.
  */
 public class ActivateSubscriptionCallback implements ExpectationCallback {
+    String subscriptionId = "";
 
     @Override
     public HttpResponse handle(HttpRequest httpRequest) {
@@ -24,16 +27,18 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
             request = (JSONObject) parser.parse(httpRequest.getBodyAsString());
         }
         catch (Exception e) {
-            System.out.println("Request cannot be converted to JSONObject: " + e.getMessage());
+            System.out.println("["+LocalDateTime.now()+"] ".concat("Request cannot be converted to JSONObject: ").concat(e.getMessage()));
             e.printStackTrace();
         }
 
-        String subscriptionId = (String) request.get("subscriptionId");
+        subscriptionId = (String) request.get("subscriptionId");
         if (subscriptionId.contains("CREATE")) {
             createSubscriptionResponseFile = "generate_create_subscription_response.json";
         } else if (subscriptionId.contains("UPDATE")) {
             createSubscriptionResponseFile = "generate_update_subscription_response.json";
         }
+
+        System.out.println("["+LocalDateTime.now()+"] ".concat("Creating Subscription ID: ").concat(subscriptionId));
 
         JSONObject subscriptionObject = null;
         String subscriptionResponse = Utils.readResponseFile(createSubscriptionResponseFile);
@@ -41,15 +46,13 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
             subscriptionObject = (JSONObject) parser.parse(subscriptionResponse);
         }
         catch (Exception e) {
-            System.out.println("Subscription object from file be converted to JSONObject: " + e.getMessage());
+            System.out.println("["+ LocalDateTime.now()+"] ".concat("Subscription object from file be converted to JSONObject: ").concat(e.getMessage()));
             e.printStackTrace();
         }
 
-        //String id = String.valueOf(subscriotionObject.get("id");
         String eventName = (String) subscriptionObject.get("eventName");
         String collectionId = (String) subscriptionObject.get("collectionId");
         String targetUrl = (String) subscriptionObject.get("targetUrl");
-        //String status = (String) subscriotionObject.get("status");
         long batchSize = (long) subscriptionObject.get("batchSize");
         String created = (String) subscriptionObject.get("created");
         String lastUpdated = (String) subscriptionObject.get("created");
@@ -67,8 +70,6 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
         responseObject.put("created", created);
         responseObject.put("lastUpdated", lastUpdated);
 
-        //System.out.println("JSON RESPONSE: \n" + responseObject.toJSONString());
-
         if (eventName.equals("product.created")) {
             responseFileName = "activate_create_subscription_response.json";
 
@@ -79,25 +80,21 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
 
         Utils.checkIfFileExist(responseFileName);
         Utils.writeResponseFile(responseFileName, responseObject);
-        //httpResponse.withBody(responseObject.toJSONString());
 
         HttpResponse httpServerResponse = createHttpServerResponse();
         httpServerResponse.withBody(responseObject.toJSONString());
-        httpServerResponse.withDelay(Delay.milliseconds(1000));
-        //System.out.println("Activated subscription for: " + responseObject.toJSONString());
+        httpServerResponse.withDelay(Delay.milliseconds(2000));
 
         return httpServerResponse;
     }
 
     private HttpResponse createHttpServerResponse() {
+        System.out.println("["+LocalDateTime.now()+"] ".concat("Activated Subscription ID: ").concat(subscriptionId));
         return new HttpResponse()
                 .withStatusCode(OK_200.code())
                 .withHeaders(
                         new Header("Content-Type", "application/json; charset=utf-8"),
-                        new Header("Cache-Control", "public, max-age=86400"),
-                        new Header("Content-Type", "application/json; charset=utf-8"),
-                        new Header("Content-Type", "application/json; charset=utf-8"),
-                        new Header("Content-Type", "application/json; charset=utf-8")
+                        new Header("Cache-Control", "public, max-age=86400")
                 );
     }
 }

@@ -1,3 +1,4 @@
+import com.google.api.client.http.GenericUrl;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -8,6 +9,7 @@ import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +19,8 @@ import static org.mockserver.model.HttpStatusCode.OK_200;
  * Created by mromero on 7/18/17.
  */
 public class CreateSubscriptionCallback implements ExpectationCallback {
+    String eventName = "";
+    Long integrationId = 0L;
 
     @Override
     public HttpResponse handle(HttpRequest httpRequest) {
@@ -31,24 +35,24 @@ public class CreateSubscriptionCallback implements ExpectationCallback {
             request = (JSONObject) parser.parse(httpRequest.getBodyAsString());
         }
         catch (ParseException e) {
-            System.out.println("Request cannot be converted to JSONObject: " + e.getMessage());
+            System.out.println("["+LocalDateTime.now()+"] ".concat("Request cannot be converted to JSONObject: ").concat(e.getMessage()));
             e.printStackTrace();
         }
-        String eventName = (String) request.get("eventName");
-        System.out.println(eventName);
+        eventName = (String) request.get("eventName");
         String targetUrl = (String) request.get("targetUrl");
         long batchSize = (long) request.get("batchSize");
         String collectionId = (String) request.get("collectionId");
 
-        //pattern = Pattern.compile("\\d+/items");
-        //matcher = pattern.matcher(targetUrl);
-        //matcher.find();
-        //String IntegrationId = matcher.group(0).replaceAll("/items", "");
+        System.out.println("["+LocalDateTime.now()+"] ".concat("Creating Subscription for Event: ").concat(eventName));
+
+        pattern = Pattern.compile("\\d+/items");
+        matcher = pattern.matcher(targetUrl);
+        matcher.find();
+        integrationId = Long.valueOf(matcher.group().replaceAll("/items", ""));
 
         JSONObject responseObject = new JSONObject();
         responseObject.put("eventName", eventName);
         responseObject.put("collectionId", collectionId);
-        //responseObject.put("targetUrl", "http://localhost:8080/integrations/shopify/".concat(IntegrationId).concat("/items"));
         responseObject.put("targetUrl", targetUrl);
         responseObject.put("batchSize", batchSize);
         responseObject.put("status", "inactive");
@@ -70,12 +74,12 @@ public class CreateSubscriptionCallback implements ExpectationCallback {
         HttpResponse httpServerResponse = createHttpServerResponse();
         httpServerResponse.withBody(responseObject.toJSONString());
         httpServerResponse.withDelay(Delay.milliseconds(1000));
-        //System.out.println("Created subscription for: " + eventName);
-
         return httpServerResponse;
     }
 
     private HttpResponse createHttpServerResponse() {
+        IntegrationTest.IntegrationId = integrationId;
+        System.out.println("["+LocalDateTime.now()+"] ".concat("Subscription created for Event: ").concat(eventName));
         return new HttpResponse()
                 .withStatusCode(OK_200.code())
                 .withHeaders(
