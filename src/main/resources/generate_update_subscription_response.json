@@ -1,10 +1,10 @@
 {
-  "lastUpdated": "2017-08-02T03:46:19.540Z",
-  "created": "2017-08-02T03:46:19.533Z",
+  "lastUpdated": "2017-08-02T22:14:56.370Z",
+  "created": "2017-08-02T22:14:56.362Z",
   "eventName": "product.updated",
   "id": "UPDATE20Z2",
   "batchSize": 100,
   "collectionId": "TIT2JGCTGC",
-  "targetUrl": "http://localhost:8080/integrations/1501834443904/items",
+  "targetUrl": "http://localhost:8080/integrations/1502502155295/items",
   "status": "inactive"
 }

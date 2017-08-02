@@ -3,13 +3,13 @@ import org.json.simple.JSONObject;
 
 import java.time.Instant;
 
-import static org.json.JSONObject.NULL;
-
 /**
  * Created by mromero on 8/1/17.
  */
 public class BatchFactory {
     public static void generateBatch() {
+        String NULL = "";
+
         JSONObject batchObject = new JSONObject();
 
         JSONObject collection = new JSONObject();
@@ -232,7 +232,7 @@ public class BatchFactory {
         batchElement.put("customFields", customFields);
 
         batchElement.put("_row", 0);
-        batchElement.put("status", "Actiive");
+        batchElement.put("status", "Active");
         batchElement.put("created", Instant.now().toString());
 
         JSONObject images = new JSONObject();

@@ -18,7 +18,7 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class IntegrationTest {
     private ClientAndServer mockServer;
-    public static final String shopifyStoreName = "nearsoft5cgw";
+    public static final String venzeeStoreName = "nearsoft5cgw";
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public static Long IntegrationId = 0L;
@@ -41,13 +41,11 @@ public class IntegrationTest {
     public void integrationTests() throws IOException, InterruptedException {
         RequestFactory.start(scheduler, 1L);
 
-        //RequestFactory.genericBatch();
-        //RequestFactory.generateBatch();
-
         mapGenerateToken("GENERATE_TOKEN", mockServer);     //GENERATE TOKEN
         mapCreateSubscription("CREATE_SUBSCRIPTION", mockServer);     //CREATE SUBSCRIPTION
         mapActivateSubscription("ACTIVATE_SUBSCRIPTION", mockServer);     //ACTIVATE SUBSCRIPTION
         mapFetchFirstBatch("FETCH_FIRST_BATCH", mockServer);     //FETCH FIRST BATCH
+        mapNotification("NOTIFICATION", mockServer);     //NOTIFICATION
 
         //JUST FOR TEST PURPOSES
         while (true) {
@@ -80,7 +78,7 @@ public class IntegrationTest {
                 .when(
                         request()
                                 .withMethod("POST")
-                                .withPath("/api/orgs/".concat(shopifyStoreName).concat("/subscriptions"))
+                                .withPath("/api/orgs/".concat(venzeeStoreName).concat("/subscriptions"))
                                 //.withBody(new JsonBody("{eventName: 'product.created'}", MatchType.ONLY_MATCHING_FIELDS))
                         ,
                         unlimited()
@@ -118,6 +116,21 @@ public class IntegrationTest {
                 .callback(
                         callback()
                                 .withCallbackClass(FetchFirstBatchCallback.class.getName())
+                );
+    }
+
+    private void mapNotification(final String operation, MockServerClient client) throws IOException {
+        client
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/api/notifications/".concat(venzeeStoreName))
+                        ,
+                        unlimited()
+                )
+                .callback(
+                        callback()
+                                .withCallbackClass(NotificationCallback.class.getName())
                 );
     }
 

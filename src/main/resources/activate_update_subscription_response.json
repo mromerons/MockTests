@@ -1,11 +1,13 @@
 {
-  "lastUpdated": "2017-08-01T00:39:37.659Z",
-  "created": "2017-08-01T00:39:37.659Z",
+  "initialPushRequested": "",
+  "lastUpdated": "2017-08-02T22:14:56.362Z",
+  "backOffDelay": "",
+  "created": "2017-08-02T22:14:56.362Z",
   "eventName": "product.updated",
   "id": "UPDATE20Z2",
   "batchSize": 100,
   "collectionId": "TIT2JGCTGC",
-  "targetUrl": "http://localhost:8080/integrations/1502900059565/items",
+  "targetUrl": "http://localhost:8080/integrations/1502502155295/items",
   "status": "active",
   "activated": true
 }

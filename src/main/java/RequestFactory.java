@@ -1,17 +1,13 @@
-import com.google.api.client.http.*;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.mockserver.client.netty.NettyHttpClient;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.json.JSONObject.NULL;
 
 /**
  * Created by mromero on 7/25/17.
@@ -19,14 +15,16 @@ import static org.json.JSONObject.NULL;
 public class RequestFactory{
 
     private static boolean initialRequest = true;
-    private static boolean subscriptionsCreated = false;
+    public static boolean subscriptionsCreated = false;
 
-    private static final String integrationHost = "http://localhost:8080";
+    private static final String integrationHost = "localhost";
+    private static final int integrationPort = 8080;
 
     public static void start(ScheduledExecutorService scheduler, Long lifetime){
         final Runnable beeper = new Runnable() {
             public void run() {
-                System.out.println("["+LocalDateTime.now()+"] Beep...");
+                //Message to check if this is alive, just for testing purposes
+                //System.out.println("["+LocalDateTime.now()+"] Beep...");
 
                 //Initial Request
                 if (initialRequest==true){
@@ -51,7 +49,6 @@ public class RequestFactory{
                         IntegrationTest.IntegrationId=0L;
                         e.printStackTrace();
                     }
-                    //IntegrationTest.IntegrationId=0L;
                 }
 
                 //When venzee is ready to send batch items
@@ -59,7 +56,7 @@ public class RequestFactory{
                     try {
                         System.out.println("["+LocalDateTime.now()+"] ".concat("Ready to send batch items, sleeping system for 10 seconds..."));
                         Thread.sleep(10000);
-                        System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Batch: CREATE10X1"));
+                        System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Batch for Integration ID: ").concat(IntegrationTest.IntegrationId.toString()));
                         sendBatch();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -67,11 +64,12 @@ public class RequestFactory{
                         IntegrationTest.readyToSendBatches=false;
                         e.printStackTrace();
                     }
+
+                    //Integration was processed
                     IntegrationTest.readyToSendBatches=false;
                     subscriptionsCreated=false;
-
-                    //Finished Integration
                     IntegrationTest.IntegrationId=0L;
+
                 }
             }
         };
@@ -87,50 +85,47 @@ public class RequestFactory{
     }
 
     private static void sendInitialIntegrationRequest() throws IOException {
-        HttpTransport httpTransport = new NetHttpTransport();
-        GenericUrl url = new GenericUrl(integrationHost.concat("/integrations/shopify"));
-        HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
         String requestBody = Utils.readResponseFile("shopify_initial_request.json");
-
-        HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", requestBody));
-        request.setRequestMethod("POST");
-        request.execute();
+        NettyHttpClient client = new NettyHttpClient();
+        org.mockserver.model.HttpRequest request = new org.mockserver.model.HttpRequest();
+        request
+                .withMethod("POST")
+                .withHeader("Host", integrationHost)
+                .withHeader("Content-Type","application/json")
+                .withPath("/integrations/shopify")
+                .withBody(requestBody);
+        client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
     }
 
     private static void sendActivateSubscriptionRequest(String subscriptionId) throws IOException {
-        HttpTransport httpTransport = new NetHttpTransport();
-        GenericUrl url = new GenericUrl(integrationHost.concat("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items"))));
-        HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-
-        HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", ""));
-        request.setRequestMethod("POST");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Hook-Setup-Call", true);
-        headers.set("X-Hook-Secret", "emmvalue");
-        headers.set("subscriptionId", subscriptionId);
-        headers.set("Connection", "Close");
-
-        request.setHeaders(headers);
-        request.execute();
+        NettyHttpClient client = new NettyHttpClient();
+        org.mockserver.model.HttpRequest request = new org.mockserver.model.HttpRequest();
+        request
+                .withMethod("POST")
+                .withHeader("Host", integrationHost)
+                .withHeader("Content-Type","application/json")
+                .withHeader("X-Hook-Setup-Call", "true")
+                .withHeader("X-Hook-Secret", "emmvalue")
+                .withHeader("subscriptionId", subscriptionId)
+                .withHeader("Connection", "Close")
+                .withPath("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items")))
+                .withBody("{ }");
+        client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
     }
 
     private static void sendBatch() throws IOException {
-        HttpTransport httpTransport = new NetHttpTransport();
-        GenericUrl url = new GenericUrl(integrationHost.concat("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items"))));
-        HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-        BatchFactory.generateBatch();
         String requestBody = Utils.readResponseFile("test_batch_1prod.json");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Hook-Setup-Call", false);
-        headers.set("X-Hook-Secret", "emmvalue");
-        //headers.set("subscriptionId", subscriptionId);
-        headers.set("Connection", "Close");
-
-        HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", requestBody));
-        request.setRequestMethod("POST");
-        request.setHeaders(headers);
-        request.execute();
+        NettyHttpClient client = new NettyHttpClient();
+        org.mockserver.model.HttpRequest request = new org.mockserver.model.HttpRequest();
+        request
+                .withMethod("POST")
+                .withHeader("Host", integrationHost)
+                .withHeader("Content-Type","application/json")
+                .withHeader("X-Hook-Setup-Call", "false")
+                .withHeader("X-Hook-Secret", "emmvalue")
+                .withHeader("Connection", "Close")
+                .withPath("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items")))
+                .withBody(requestBody);
+        client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
     }
 }

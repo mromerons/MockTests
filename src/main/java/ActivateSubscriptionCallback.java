@@ -8,7 +8,6 @@ import org.mockserver.model.HttpResponse;
 
 import java.time.LocalDateTime;
 
-import static org.json.JSONObject.NULL;
 import static org.mockserver.model.HttpStatusCode.OK_200;
 
 /**
@@ -65,9 +64,9 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
         responseObject.put("targetUrl", targetUrl);
         responseObject.put("status", "active");
         responseObject.put("batchSize", batchSize);
-        responseObject.put("backOffDelay", NULL);
+        responseObject.put("backOffDelay", "");
         responseObject.put("activated", true);
-        responseObject.put("initialPushRequested", NULL);
+        responseObject.put("initialPushRequested", "");
         responseObject.put("created", created);
         responseObject.put("lastUpdated", lastUpdated);
 
