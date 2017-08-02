@@ -18,10 +18,11 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class IntegrationTest {
     private ClientAndServer mockServer;
-    final String shopifyStoreName = "nearsoft5cgw";
+    public static final String shopifyStoreName = "nearsoft5cgw";
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public static Long IntegrationId = 0L;
+    public static boolean readyToSendBatches = false;
 
     @Before
     public void startServer(){
@@ -40,11 +41,15 @@ public class IntegrationTest {
     public void integrationTests() throws IOException, InterruptedException {
         RequestFactory.start(scheduler, 1L);
 
+        //RequestFactory.genericBatch();
+        //RequestFactory.generateBatch();
+
         mapGenerateToken("GENERATE_TOKEN", mockServer);     //GENERATE TOKEN
         mapCreateSubscription("CREATE_SUBSCRIPTION", mockServer);     //CREATE SUBSCRIPTION
         mapActivateSubscription("ACTIVATE_SUBSCRIPTION", mockServer);     //ACTIVATE SUBSCRIPTION
+        mapFetchFirstBatch("FETCH_FIRST_BATCH", mockServer);     //FETCH FIRST BATCH
 
-        // JUST FOR TEST PURPOSES
+        //JUST FOR TEST PURPOSES
         while (true) {
             Thread.sleep(1000L);
         }
@@ -98,6 +103,21 @@ public class IntegrationTest {
                 .callback(
                         callback()
                                 .withCallbackClass(ActivateSubscriptionCallback.class.getName())
+                );
+    }
+
+    private void mapFetchFirstBatch(final String operation, MockServerClient client) throws IOException {
+        client
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/api/connectors/initialpush")
+                        ,
+                        unlimited()
+                )
+                .callback(
+                        callback()
+                                .withCallbackClass(FetchFirstBatchCallback.class.getName())
                 );
     }
 

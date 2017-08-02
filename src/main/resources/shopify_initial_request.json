@@ -3,8 +3,8 @@
   "apiKey": "48c2accff766e2dd3622ea3d7b3fd73d",
   "apiSecret": "ddd7e38beba5e3edbf4aafbc3c3647d8141ae124",
   "authObj":  {
-    "oauthToken": "ddd7e38beba5e3edbf4aafbc3c3647d8141ae124",
-    "shopName": "shopyqa4"
+    "oauthToken": "d7349f989ab83de40873466386829c4d",
+    "shopName": "shopyqa5"
   },
   "eventType": "product.created, product.updated",
   "venzeeIntegrationId": "48c2accff766e2dd3622ea3d7b3fd73d",

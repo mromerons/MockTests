@@ -1,10 +1,10 @@
 {
-  "lastUpdated": "2017-07-29T00:30:30.330Z",
-  "created": "2017-07-29T00:30:30.324Z",
+  "lastUpdated": "2017-08-02T03:46:19.540Z",
+  "created": "2017-08-02T03:46:19.533Z",
   "eventName": "product.created",
   "id": "CREATE10X1",
   "batchSize": 100,
   "collectionId": "TIT2JGCTGC",
-  "targetUrl": "http://localhost:8080/integrations/1499829766175/items",
+  "targetUrl": "http://localhost:8080/integrations/1501834443904/items",
   "status": "inactive"
 }
