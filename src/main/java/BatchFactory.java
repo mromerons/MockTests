@@ -1,22 +1,118 @@
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 
 /**
  * Created by mromero on 8/1/17.
  */
 public class BatchFactory {
-    public static void generateBatch() {
-        String NULL = "";
+    //
+    private static String listName = "automation-test-list";
+    private static String organizationId = "E4N49A4IV9";
+    private static String collectionId = "XXXXXXXXXX";
+    private static String subscriptionId = "ZZZZZZZZZZ";
 
-        JSONObject batchObject = new JSONObject();
+    //Helpers
+    private static String empty = "empty";
+    private static boolean hasVariants = false;
 
-        JSONObject collection = new JSONObject();
+    //Initial Values
+    private static long sku = 95045641100L;
+    private static long title = 1L;
+    private static long position = 100L;
+    private static long barcode = 95045641100L;
 
-        collection.put("statusERD", "new");
-        collection.put("lastUpdated", Instant.now().toString());
+    //Images Map
+    private static HashMap imageURL = new HashMap(){{
+        put(1, "https://image.freepik.com/free-vector/industry-logo_1103-713.jpg");
+        put(2, "https://image.freepik.com/free-vector/online-games-logo_1103-1041.jpg");
+        put(3, "https://image.freepik.com/free-vector/solid-technology-logo_1103-819.jpg");
+        put(4, "https://image.freepik.com/free-vector/modern-pixel-concept-logo_1103-1042.jpg");
+        put(5, "https://image.freepik.com/free-vector/dart-club-logo_1103-997.jpg");
+        put(6, "https://image.freepik.com/free-vector/basketball-club-logo_1103-924.jpg");
+        put(7, "https://image.freepik.com/free-vector/logo-with-a-rocket-and-gear_1103-644.jpg");
+        put(8, "https://image.freepik.com/free-vector/poker-club-logo_1103-968.jpg");
+        put(9, "https://image.freepik.com/free-vector/blue-tecgo_1103-822.jpg");
+        put(10, "https://image.freepik.com/free-vector/infinity-star-logo_1103-982.jpg");
+        put(11, "https://image.freepik.com/free-vector/royal-golfing-logo_1103-961.jpg");
+    }};
 
+
+    public static String generateBatchPayload(int products, int variants){
+        //Load batch info
+        collectionId = StringUtils.defaultIfEmpty(RequestFactory.collectionId, "XXXXXXXXXX");
+        subscriptionId = StringUtils.defaultIfEmpty(RequestFactory.subsIdCreate, "ZZZZZZZZZZ");
+
+        String requestBody;
+        JSONObject fullBatch = new JSONObject();
+        fullBatch.put("batchNumber", 0);
+        fullBatch.put("totalBatches", 1);
+        fullBatch.put("targetUrl", RequestFactory.integrationHost.concat(":").concat(String.valueOf(RequestFactory.integrationPort))
+                .concat("/integrations/").concat(IntegrationTest.IntegrationId.toString()).concat("/items"));
+        fullBatch.put("createdAt", Instant.now().toString());
+        fullBatch.put("eventName", "product.created");
+        fullBatch.put("organizationId", organizationId);
+        fullBatch.put("subscriptionId", subscriptionId);
+        fullBatch.put("collection", collectionBuilder());
+        fullBatch.put("batch", batchBuilder(products, variants));
+
+        requestBody = fullBatch.toJSONString();
+        requestBody = requestBody.replaceAll("\"empty\"", "null");
+        requestBody = requestBody.replaceAll("\\\\", "");
+
+        /*
+        System.out.println("\n===========PRINTING FULL BATCH GENERATED==========\n");
+        System.out.println(requestBody);
+        System.out.println("==================================================");
+        */
+
+        System.out.println("["+LocalDateTime.now()+"] ".concat("Batch successfully created."));
+        return requestBody;
+    }
+
+    public static JSONArray batchBuilder(int products, int variants){
+        if(products<=0){
+            System.out.println("["+LocalDateTime.now()+"] ".concat("There should be at least one product in batch."));
+            products=1;
+        }
+        if (variants > 0) {
+            hasVariants=true;
+            if(variants>10){
+                System.out.println("["+LocalDateTime.now()+"] ".concat("Maximum number of Variants supported is 10"));
+                variants=10;
+            }
+        }
+        System.out.println("["+LocalDateTime.now()+"] ".concat("Processing ").concat(
+                String.valueOf(products)).concat(" Product(s) with ").concat(String.valueOf(variants)).concat(" Variant(s)."));
+
+        JSONArray batch = new JSONArray();
+        for(int i=1; i<=products; i++){
+            //Create Product
+            batch.add(createProduct());
+            //Create the Variants of the Product
+            for(int j=1; j<=variants; j++){
+                batch.add(createVariant(j));
+            }
+            //When variants, reach 100's when changing product
+            if(hasVariants){
+                while(!String.valueOf(sku).endsWith("00")){
+                    sku++;
+                }
+                barcode=sku;
+            }
+            else {
+                barcode++;
+            }
+        }
+        return batch;
+    }
+
+    private static JSONObject collectionBuilder(){
         JSONArray imageColumns = new JSONArray();
         imageColumns.add("image_1");
         imageColumns.add("image_2");
@@ -48,15 +144,6 @@ public class BatchFactory {
         imageColumns.add("image_28");
         imageColumns.add("image_29");
         imageColumns.add("image_30");
-        collection.put("imageColumns", imageColumns);
-
-        collection.put("rowCount", 1);
-        collection.put("created", Instant.now().toString());
-
-        collection.put("recordSrcMapping", new JSONObject());
-        collection.put("name", "automation-testlist");
-        collection.put("rowParentCount", 2);
-        collection.put("lastRow", 1);
 
         JSONArray recordSrcAttributes = new JSONArray();
         recordSrcAttributes.add("sku");
@@ -150,122 +237,232 @@ public class BatchFactory {
         recordSrcAttributes.add("alt_image_29");
         recordSrcAttributes.add("image_30");
         recordSrcAttributes.add("alt_image_30");
-        collection.put("recordSrcAttributes", recordSrcAttributes);
 
-        collection.put("organizationId", "E4N49A4IV9");
-        collection.put("map", NULL);
-        collection.put("id", "4UJANJSJWV");
+        JSONObject collection = new JSONObject();
+        collection.put("recordSrcAttributes", recordSrcAttributes);
+        collection.put("imageColumns", imageColumns);
+        collection.put("rowCount", 1);
+        collection.put("created", Instant.now().toString());
+        collection.put("recordSrcMapping", new JSONObject());
+        collection.put("name", listName);
+        collection.put("rowParentCount", 1);
+        collection.put("lastRow", 1);
+        collection.put("statusERD", "new");
+        collection.put("lastUpdated", Instant.now().toString());
+        collection.put("organizationId", organizationId);
+        collection.put("map", empty);
+        collection.put("id", collectionId);
         collection.put("type", "erd");
 
-        batchObject.put("collection", collection);
+        return collection;
+    }
 
-        batchObject.put("batchNumber", 0);
-        batchObject.put("totalBatches", 1);
-
-        JSONArray batch = new JSONArray();
-
+    private static JSONObject createProduct(){
         JSONObject batchElement = new JSONObject();
+        batchElement.put("sourceRecordId", sku);
+        batchElement.put("created", Instant.now().toString());
+        batchElement.put("_row", 0);
+        batchElement.put("status", "Active");
         batchElement.put("lastUpdated", Instant.now().toString());
 
         JSONObject customFields = new JSONObject();
-        customFields.put("body_html", NULL);
-        customFields.put("inventory_management", NULL);
-        customFields.put("requires_shipping", true);
-        customFields.put("option1_name", NULL);
-        customFields.put("metafields_global_description_tag", NULL);
-        customFields.put("option3_value", NULL);
-        customFields.put("alt_image_5", NULL);
-        customFields.put("alt_image_4", NULL);
-        customFields.put("alt_image_3", NULL);
-        customFields.put("option2_name", NULL);
-        customFields.put("alt_image_2", NULL);
-        customFields.put("alt_image_9", NULL);
-        customFields.put("alt_image_8", NULL);
-        customFields.put("price", "70");
-        customFields.put("alt_image_7", NULL);
-        customFields.put("alt_image_6", NULL);
-        customFields.put("sku", "155686755");
-        customFields.put("grams", NULL);
-        customFields.put("alt_image_1", NULL);
-        customFields.put("barcode", NULL);
-        customFields.put("inventory_quantity", NULL);
-        customFields.put("compare_at_price", NULL);
-        customFields.put("taxable", true);
+        customFields.put("body_html", "NOBODY");
+        customFields.put("compare_at_price", 130);
         customFields.put("fulfillment_service", "manual");
-        customFields.put("weight", NULL);
-        customFields.put("handle", NULL);
-        customFields.put("published", NULL);
-        customFields.put("alt_image_30", NULL);
-        customFields.put("tags", NULL);
+        customFields.put("grams", 200);
+        customFields.put("handle", "Manual");
+        customFields.put("inventory_management", "Shopify");
+        customFields.put("inventory_policy", "allow");
+        customFields.put("inventory_quantity", 20);
+        customFields.put("metafields_global_description_tag", "tags");
+        customFields.put("metafields_global_title_tag", "General Item Main");
+        customFields.put("option1_name", "Color");
+        customFields.put("option2_name", "Size");
+        customFields.put("option3_name", "Dimension");
+        customFields.put("option1_value", "Main");
+        customFields.put("option2_value", "M");
+        customFields.put("option3_value", "33x22x22");
+        customFields.put("position", position);
+        customFields.put("price", 100);
+        customFields.put("product_type", "General Item");
+        customFields.put("published", true);
         customFields.put("published_scope", "global");
-        customFields.put("weight_unit", "lb");
-        customFields.put("alt_image_29", NULL);
-        customFields.put("position", 1);
-        customFields.put("alt_image_28", NULL);
-        customFields.put("option3_name", NULL);
-        customFields.put("alt_image_23", NULL);
-        customFields.put("alt_image_22", NULL);
-        customFields.put("alt_image_21", NULL);
-        customFields.put("alt_image_20", NULL);
-        customFields.put("alt_image_27", NULL);
-        customFields.put("alt_image_26", NULL);
-        customFields.put("alt_image_25", NULL);
-        customFields.put("alt_image_24", NULL);
-        customFields.put("metafields_global_title_tag", NULL);
-        customFields.put("title", "Dining Chair");
-        customFields.put("template_suffix", NULL);
-        customFields.put("vendor", NULL);
-        customFields.put("alt_image_19", NULL);
-        customFields.put("alt_image_18", NULL);
-        customFields.put("alt_image_17", NULL);
-        customFields.put("option1_value", NULL);
-        customFields.put("alt_image_12", NULL);
-        customFields.put("alt_image_11", NULL);
-        customFields.put("alt_image_10", NULL);
-        customFields.put("alt_image_16", NULL);
-        customFields.put("alt_image_15", NULL);
-        customFields.put("alt_image_14", NULL);
-        customFields.put("alt_image_13", NULL);
-        customFields.put("inventory_policy", "deny");
-        customFields.put("product_type", "White Chair");
-        customFields.put("option2_value", NULL);
+        customFields.put("requires_shipping", true);
+        customFields.put("sku", sku);
+        customFields.put("tags", "TestTags");
+        customFields.put("taxable", true);
+        customFields.put("template_suffix", "product.item.main");
+        customFields.put("title", "Item".concat(String.valueOf(title)));
+        customFields.put("vendor", "Nearsoft");
+        customFields.put("weight", 4);
+        customFields.put("weight_unit", "kg");
+        customFields.put("alt_image_1", "Alt Img 1");
+        customFields.put("alt_image_2", empty);
+        customFields.put("alt_image_3", empty);
+        customFields.put("alt_image_4", empty);
+        customFields.put("alt_image_5", empty);
+        customFields.put("alt_image_6", empty);
+        customFields.put("alt_image_7", empty);
+        customFields.put("alt_image_8", empty);
+        customFields.put("alt_image_9", empty);
+        customFields.put("alt_image_10", empty);
+        customFields.put("alt_image_11", empty);
+        customFields.put("alt_image_12", empty);
+        customFields.put("alt_image_13", empty);
+        customFields.put("alt_image_14", empty);
+        customFields.put("alt_image_15", empty);
+        customFields.put("alt_image_16", empty);
+        customFields.put("alt_image_17", empty);
+        customFields.put("alt_image_18", empty);
+        customFields.put("alt_image_19", empty);
+        customFields.put("alt_image_20", empty);
+        customFields.put("alt_image_21", empty);
+        customFields.put("alt_image_22", empty);
+        customFields.put("alt_image_23", empty);
+        customFields.put("alt_image_24", empty);
+        customFields.put("alt_image_25", empty);
+        customFields.put("alt_image_26", empty);
+        customFields.put("alt_image_27", empty);
+        customFields.put("alt_image_28", empty);
+        customFields.put("alt_image_29", empty);
+        customFields.put("alt_image_30", empty);
+
+        if(!hasVariants){
+            customFields.put("barcode", barcode);
+            title++;
+        }
+
         batchElement.put("customFields", customFields);
 
-        batchElement.put("_row", 0);
-        batchElement.put("status", "Active");
-        batchElement.put("created", Instant.now().toString());
+        JSONObject thumbnail = new JSONObject();
+        String filename = imageURL.get(1).toString().replaceAll("https://image\\.freepik\\.com/free-vector/", "");
+        thumbnail.put("url", imageURL.get(1));
+        thumbnail.put("filename", filename);
+
+        JSONObject imageElement = new JSONObject();
+        imageElement.put("thumbnail", thumbnail);
+        imageElement.put("id", createRandomID());
+        imageElement.put("filename", filename);
+        imageElement.put("position", 0);
+        imageElement.put("url", imageURL.get(1));
+        imageElement.put("fromUrl", true);
 
         JSONObject images = new JSONObject();
-        JSONObject imageElement = new JSONObject();
-        JSONObject thumbnail = new JSONObject();
-        thumbnail.put("url", "http://www.finemodimports.com/v/vspfiles/FMIimages/10014white-01.jpg");
-        thumbnail.put("filename", "10014white-01.jpg");
-        imageElement.put("thumbnail", thumbnail);
-
-        imageElement.put("id", "LR6XJZCTLX");
-        imageElement.put("filename", "10014white-01.jpg");
-        imageElement.put("position", 0);
-        imageElement.put("url", "http://www.finemodimports.com/v/vspfiles/FMIimages/10014white-01.jpg");
-        imageElement.put("fromUrl", true);
-        images.put("10014white-01.jpg", imageElement);
-
+        images.put(filename, imageElement);
         batchElement.put("images", images);
-        batchElement.put("sourceRecordId", "FMI10014");
-        batchElement.put("id", "ZSLKWJGMDS");
-        batchElement.put("collectionId", "4UJANJSJWV");
+        batchElement.put("id", createRandomID());
+        batchElement.put("collectionId", collectionId);
 
-        batch.add(batchElement);
+        sku++;
+        position++;
 
-        batchObject.put("batch", batch);
+        return batchElement;
+    }
 
-        batchObject.put("targetUrl", "http://localhost:8080/integrations/".concat(IntegrationTest.IntegrationId.toString()).concat("/items"));
-        batchObject.put("createdAt", Instant.now().toString());
-        batchObject.put("eventName", "product.created");
-        batchObject.put("organizationId", "E4N49A4IV9");
-        batchObject.put("subscriptionId", "CREATE10X1");
+    private static JSONObject createVariant(int variantNumber){
+        JSONObject batchElement = new JSONObject();
+        batchElement.put("sourceParentId", barcode);
+        batchElement.put("sourceRecordId", sku);
+        batchElement.put("created", Instant.now().toString());
+        batchElement.put("_row", 0);
+        batchElement.put("status", "Active");
+        batchElement.put("lastUpdated", Instant.now().toString());
 
-        String responseFileName = "test_batch_1prod.json";
-        Utils.checkIfFileExist(responseFileName);
-        Utils.writeResponseFile(responseFileName, batchObject);
+        JSONObject customFields = new JSONObject();
+        customFields.put("barcode", barcode);
+        customFields.put("body_html", "NOBODY");
+        customFields.put("compare_at_price", 150);
+        customFields.put("fulfillment_service", "manual");
+        customFields.put("grams", 300);
+        customFields.put("handle", "Manual");
+        customFields.put("inventory_management", "Shopify");
+        customFields.put("inventory_policy", "allow");
+        customFields.put("inventory_quantity", 10);
+        customFields.put("metafields_global_description_tag", "tags");
+        customFields.put("metafields_global_title_tag", "General Item Other");
+        customFields.put("option1_name", "Color");
+        customFields.put("option2_name", "Size");
+        customFields.put("option3_name", "Dimension");
+        customFields.put("option1_value", "Other");
+        customFields.put("option2_value", "L");
+        customFields.put("option3_value", "45x34x34");
+        customFields.put("position", position);
+        customFields.put("price", 120);
+        customFields.put("product_type", "General Item");
+        customFields.put("published", true);
+        customFields.put("published_scope", "global");
+        customFields.put("requires_shipping", true);
+        customFields.put("sku", sku);
+        customFields.put("tags", "TestTags");
+        customFields.put("taxable", true);
+        customFields.put("template_suffix", "product.item.variant");
+        customFields.put("title", "Item".concat(String.valueOf(title)).concat("-").concat(String.valueOf(variantNumber)));
+        customFields.put("vendor", "Nearsoft");
+        customFields.put("weight", 5);
+        customFields.put("weight_unit", "kg");
+
+        customFields.put("alt_image_1", "Alt Img 1");
+        customFields.put("alt_image_2", empty);
+        customFields.put("alt_image_3", empty);
+        customFields.put("alt_image_4", empty);
+        customFields.put("alt_image_5", empty);
+        customFields.put("alt_image_6", empty);
+        customFields.put("alt_image_7", empty);
+        customFields.put("alt_image_8", empty);
+        customFields.put("alt_image_9", empty);
+        customFields.put("alt_image_10", empty);
+        customFields.put("alt_image_11", empty);
+        customFields.put("alt_image_12", empty);
+        customFields.put("alt_image_13", empty);
+        customFields.put("alt_image_14", empty);
+        customFields.put("alt_image_15", empty);
+        customFields.put("alt_image_16", empty);
+        customFields.put("alt_image_17", empty);
+        customFields.put("alt_image_18", empty);
+        customFields.put("alt_image_19", empty);
+        customFields.put("alt_image_20", empty);
+        customFields.put("alt_image_21", empty);
+        customFields.put("alt_image_22", empty);
+        customFields.put("alt_image_23", empty);
+        customFields.put("alt_image_24", empty);
+        customFields.put("alt_image_25", empty);
+        customFields.put("alt_image_26", empty);
+        customFields.put("alt_image_27", empty);
+        customFields.put("alt_image_28", empty);
+        customFields.put("alt_image_29", empty);
+        customFields.put("alt_image_30", empty);
+
+        batchElement.put("customFields", customFields);
+
+        JSONObject thumbnail = new JSONObject();
+        String filename = imageURL.get(variantNumber+1).toString().replaceAll("https://image\\.freepik\\.com/free-vector/", "");
+        thumbnail.put("url", imageURL.get(variantNumber+1));
+        thumbnail.put("filename", filename);
+
+        JSONObject imageElement = new JSONObject();
+        imageElement.put("thumbnail", thumbnail);
+        imageElement.put("id", createRandomID());
+        imageElement.put("filename", filename);
+        imageElement.put("position", 0);
+        imageElement.put("url", imageURL.get(variantNumber+1));
+        imageElement.put("fromUrl", true);
+
+        JSONObject images = new JSONObject();
+        images.put(filename, imageElement);
+        batchElement.put("images", images);
+
+        sku++;
+        title++;
+        position++;
+
+        batchElement.put("id", createRandomID());
+        batchElement.put("collectionId", collectionId);
+
+        return batchElement;
+
+    }
+
+    private static String createRandomID(){
+        return RandomStringUtils.randomAlphanumeric(10).toUpperCase();
     }
 }

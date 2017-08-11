@@ -1,3 +1,4 @@
+import org.apache.commons.lang3.RandomStringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -20,6 +21,8 @@ import static org.mockserver.model.HttpStatusCode.OK_200;
 public class CreateSubscriptionCallback implements ExpectationCallback {
     String eventName = "";
     Long integrationId = 0L;
+    public static String createId;
+    public static String updateId;
 
     @Override
     public HttpResponse handle(HttpRequest httpRequest) {
@@ -40,7 +43,7 @@ public class CreateSubscriptionCallback implements ExpectationCallback {
         eventName = (String) request.get("eventName");
         String targetUrl = (String) request.get("targetUrl");
         long batchSize = (long) request.get("batchSize");
-        String collectionId = (String) request.get("collectionId");
+        String collectionId = RequestFactory.collectionId;
 
         System.out.println("["+LocalDateTime.now()+"] ".concat("Creating Subscription for Event: ").concat(eventName));
 
@@ -59,11 +62,13 @@ public class CreateSubscriptionCallback implements ExpectationCallback {
         responseObject.put("lastUpdated", Instant.now().toString());
 
         if (eventName.equals("product.created")) {
-            responseObject.put("id", "CREATE10X1");
+            createId = createID();
+            responseObject.put("id", createId);
             responseFileName = "generate_create_subscription_response.json";
 
         } else if (eventName.equals("product.updated")) {
-            responseObject.put("id", "UPDATE20Z2");
+            updateId = createID();
+            responseObject.put("id", updateId);
             responseFileName = "generate_update_subscription_response.json";
         }
 
@@ -85,6 +90,10 @@ public class CreateSubscriptionCallback implements ExpectationCallback {
                         new Header("Content-Type", "application/json; charset=utf-8"),
                         new Header("Cache-Control", "public, max-age=86400")
                 );
+    }
+
+    private String createID(){
+        return RandomStringUtils.randomAlphanumeric(10).toUpperCase();
     }
 
 }

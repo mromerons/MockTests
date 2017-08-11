@@ -32,9 +32,9 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
         }
 
         subscriptionId = (String) request.get("subscriptionId");
-        if (subscriptionId.contains("CREATE")) {
+        if (subscriptionId.contains(CreateSubscriptionCallback.createId)){
             createSubscriptionResponseFile = "generate_create_subscription_response.json";
-        } else if (subscriptionId.contains("UPDATE")) {
+        } else if (subscriptionId.contains(CreateSubscriptionCallback.updateId)) {
             createSubscriptionResponseFile = "generate_update_subscription_response.json";
         }
 
@@ -51,11 +51,11 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
         }
 
         String eventName = (String) subscriptionObject.get("eventName");
-        String collectionId = (String) subscriptionObject.get("collectionId");
+        String collectionId = RequestFactory.collectionId;
         String targetUrl = (String) subscriptionObject.get("targetUrl");
         long batchSize = (long) subscriptionObject.get("batchSize");
         String created = (String) subscriptionObject.get("created");
-        String lastUpdated = (String) subscriptionObject.get("created");
+        String lastUpdated = (String) subscriptionObject.get("lastUpdated");
 
         JSONObject responseObject = new JSONObject();
         responseObject.put("id", subscriptionId);
@@ -75,7 +75,6 @@ public class ActivateSubscriptionCallback implements ExpectationCallback {
 
         } else if (eventName.equals("product.updated")) {
             responseFileName = "activate_update_subscription_response.json";
-
         }
 
         Utils.checkIfFileExist(responseFileName);

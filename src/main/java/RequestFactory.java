@@ -1,4 +1,10 @@
+import org.apache.commons.lang3.RandomStringUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.mockserver.client.netty.NettyHttpClient;
+import org.mockserver.model.Header;
+import org.mockserver.model.HttpRequest;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,10 +21,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class RequestFactory{
 
     private static boolean initialRequest = true;
-    public static boolean subscriptionsCreated = false;
 
-    private static final String integrationHost = "localhost";
-    private static final int integrationPort = 8080;
+    public static String subsIdCreate = "";
+    public static String subsIdUpdate = "";
+
+    public static boolean subscriptionsCreated = false;
+    public static String collectionId = "";
+
+    public static final String integrationHost = "localhost";
+    public static final int integrationPort = 8080;
 
     public static void start(ScheduledExecutorService scheduler, Long lifetime){
         final Runnable beeper = new Runnable() {
@@ -40,10 +51,15 @@ public class RequestFactory{
                 //When subscription is already created and ready to be activated
                 if (subscriptionsCreated==false && initialRequest==false && IntegrationTest.IntegrationId != 0L){
                     try {
-                        System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Activate Subscription Request for Subscription ID: CREATE10X1"));
-                        sendActivateSubscriptionRequest("CREATE10X1");
-                        System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Activate Subscription Request for Subscription ID: UPDATE20Z2"));
-                        sendActivateSubscriptionRequest("UPDATE20Z2");
+                        //Send first the update before the create because Mock-Server callback is blocking Nearsoft Code
+                        subsIdUpdate = CreateSubscriptionCallback.updateId;
+                        System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Activate Subscription Request for Subscription ID: ").concat(subsIdUpdate));
+                        sendActivateSubscriptionRequest(subsIdUpdate);
+
+                        subsIdCreate = CreateSubscriptionCallback.createId;
+                        System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Activate Subscription Request for Subscription ID: ").concat(subsIdCreate));
+                        sendActivateSubscriptionRequest(subsIdCreate);
+
                         subscriptionsCreated = true;
                     } catch (IOException e) {
                         IntegrationTest.IntegrationId=0L;
@@ -57,7 +73,9 @@ public class RequestFactory{
                         System.out.println("["+LocalDateTime.now()+"] ".concat("Ready to send batch items, sleeping system for 10 seconds..."));
                         Thread.sleep(10000);
                         System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Batch for Integration ID: ").concat(IntegrationTest.IntegrationId.toString()));
-                        sendBatch();
+
+                        //Set the number of Products to send and how many Variants will have each Product
+                        sendBatch(1, 0);
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (InterruptedException e) {
@@ -69,7 +87,6 @@ public class RequestFactory{
                     IntegrationTest.readyToSendBatches=false;
                     subscriptionsCreated=false;
                     IntegrationTest.IntegrationId=0L;
-
                 }
             }
         };
@@ -84,48 +101,62 @@ public class RequestFactory{
         }, lifetime, HOURS);
     }
 
-    private static void sendInitialIntegrationRequest() throws IOException {
+    public static void sendInitialIntegrationRequest() throws IOException {
         String requestBody = Utils.readResponseFile("shopify_initial_request.json");
+        JSONObject initialBatch = null;
+        JSONParser parser = new JSONParser();
+        try {
+            initialBatch = (JSONObject) parser.parse(requestBody);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        collectionId = createID();
+        initialBatch.put("collectionId", collectionId);
+
         NettyHttpClient client = new NettyHttpClient();
-        org.mockserver.model.HttpRequest request = new org.mockserver.model.HttpRequest();
+        HttpRequest request = new HttpRequest();
         request
                 .withMethod("POST")
-                .withHeader("Host", integrationHost)
-                .withHeader("Content-Type","application/json")
+                .withHeader(new Header("Host", integrationHost))
+                .withHeader(new Header("Content-Type","application/json"))
                 .withPath("/integrations/shopify")
-                .withBody(requestBody);
+                .withBody(initialBatch.toJSONString());
         client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
     }
 
     private static void sendActivateSubscriptionRequest(String subscriptionId) throws IOException {
         NettyHttpClient client = new NettyHttpClient();
-        org.mockserver.model.HttpRequest request = new org.mockserver.model.HttpRequest();
+        HttpRequest request = new HttpRequest();
         request
                 .withMethod("POST")
-                .withHeader("Host", integrationHost)
-                .withHeader("Content-Type","application/json")
-                .withHeader("X-Hook-Setup-Call", "true")
-                .withHeader("X-Hook-Secret", "emmvalue")
-                .withHeader("subscriptionId", subscriptionId)
-                .withHeader("Connection", "Close")
+                .withHeader(new Header("Host", integrationHost))
+                .withHeader(new Header("Content-Type","application/json"))
+                .withHeader(new Header("X-Hook-Setup-Call", "true"))
+                .withHeader(new Header("X-Hook-Secret", "emmvalue"))
+                .withHeader(new Header("subscriptionId", subscriptionId))
+                .withHeader(new Header("Connection", "Close"))
                 .withPath("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items")))
                 .withBody("{ }");
-        client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
+            client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
     }
 
-    private static void sendBatch() throws IOException {
-        String requestBody = Utils.readResponseFile("test_batch_1prod.json");
+    private static void sendBatch(int products, int variants) throws IOException {
+        String requestBody = BatchFactory.generateBatchPayload(products, variants);
         NettyHttpClient client = new NettyHttpClient();
-        org.mockserver.model.HttpRequest request = new org.mockserver.model.HttpRequest();
+        HttpRequest request = new HttpRequest();
         request
                 .withMethod("POST")
-                .withHeader("Host", integrationHost)
-                .withHeader("Content-Type","application/json")
-                .withHeader("X-Hook-Setup-Call", "false")
-                .withHeader("X-Hook-Secret", "emmvalue")
-                .withHeader("Connection", "Close")
+                .withHeader(new Header("Host", integrationHost))
+                .withHeader(new Header("Content-Type","application/json"))
+                .withHeader(new Header("X-Hook-Setup-Call", "false"))
+                .withHeader(new Header("X-Hook-Secret", "emmvalue"))
+                .withHeader(new Header("Connection", "Close"))
                 .withPath("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items")))
                 .withBody(requestBody);
         client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
+    }
+
+    private static String createID(){
+        return RandomStringUtils.randomAlphanumeric(10).toUpperCase();
     }
 }

@@ -124,7 +124,7 @@ public class IntegrationTest {
                 .when(
                         request()
                                 .withMethod("POST")
-                                .withPath("/api/notifications/".concat(venzeeStoreName))
+                                .withPath("/api/notifications/".concat(venzeeStoreName).concat("/"))
                         ,
                         unlimited()
                 )
