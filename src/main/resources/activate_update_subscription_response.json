@@ -1,13 +1,13 @@
 {
   "initialPushRequested": "",
-  "lastUpdated": "2017-08-10T17:38:12.647Z",
+  "lastUpdated": "2017-08-26T01:07:32.861Z",
   "backOffDelay": "",
-  "created": "2017-08-10T17:38:12.647Z",
+  "created": "2017-08-26T01:07:32.861Z",
   "eventName": "product.updated",
-  "id": "L7EYSGZK7S",
+  "id": "FHYLVWSVCH",
   "batchSize": 100,
-  "collectionId": "VXTKCTE3UZ",
-  "targetUrl": "http://localhost:8080/integrations/1503036225486/items",
+  "collectionId": "4YBKNEBTEJ",
+  "targetUrl": "http://localhost:8080/integrations/1505538130869/items",
   "status": "active",
   "activated": true
 }

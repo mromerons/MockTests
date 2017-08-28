@@ -9,6 +9,7 @@ import org.mockserver.model.HttpRequest;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
@@ -75,7 +76,7 @@ public class RequestFactory{
                         System.out.println("["+LocalDateTime.now()+"] ".concat("Sending Batch for Integration ID: ").concat(IntegrationTest.IntegrationId.toString()));
 
                         //Set the number of Products to send and how many Variants will have each Product
-                        sendBatch(1, 0);
+                        sendBatch(10, 2);
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (InterruptedException e) {
@@ -101,7 +102,7 @@ public class RequestFactory{
         }, lifetime, HOURS);
     }
 
-    public static void sendInitialIntegrationRequest() throws IOException {
+    public static CompletableFuture<Void> sendInitialIntegrationRequest() throws IOException {
         String requestBody = Utils.readResponseFile("shopify_initial_request.json");
         JSONObject initialBatch = null;
         JSONParser parser = new JSONParser();
@@ -121,10 +122,11 @@ public class RequestFactory{
                 .withHeader(new Header("Content-Type","application/json"))
                 .withPath("/integrations/shopify")
                 .withBody(initialBatch.toJSONString());
-        client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
+        return CompletableFuture.runAsync(() ->
+            client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort)));
     }
 
-    private static void sendActivateSubscriptionRequest(String subscriptionId) throws IOException {
+    private static CompletableFuture<Void> sendActivateSubscriptionRequest(String subscriptionId) throws IOException {
         NettyHttpClient client = new NettyHttpClient();
         HttpRequest request = new HttpRequest();
         request
@@ -137,10 +139,11 @@ public class RequestFactory{
                 .withHeader(new Header("Connection", "Close"))
                 .withPath("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items")))
                 .withBody("{ }");
-            client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
+        return CompletableFuture.runAsync(() ->
+                client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort)));
     }
 
-    private static void sendBatch(int products, int variants) throws IOException {
+    private static CompletableFuture<Void> sendBatch(int products, int variants) throws IOException {
         String requestBody = BatchFactory.generateBatchPayload(products, variants);
         NettyHttpClient client = new NettyHttpClient();
         HttpRequest request = new HttpRequest();
@@ -153,7 +156,8 @@ public class RequestFactory{
                 .withHeader(new Header("Connection", "Close"))
                 .withPath("/integrations/".concat(IntegrationTest.IntegrationId.toString().concat("/items")))
                 .withBody(requestBody);
-        client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort));
+        return CompletableFuture.runAsync(() ->
+            client.sendRequest(request, InetSocketAddress.createUnresolved(integrationHost, integrationPort)));
     }
 
     private static String createID(){

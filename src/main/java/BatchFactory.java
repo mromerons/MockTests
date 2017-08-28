@@ -14,8 +14,11 @@ public class BatchFactory {
     //
     private static String listName = "automation-test-list";
     private static String organizationId = "E4N49A4IV9";
-    private static String collectionId = "XXXXXXXXXX";
+    private static String integrationId = "XXXXXXXXXX";
+    private static String collectionId = "YYYYYYYYYY";
     private static String subscriptionId = "ZZZZZZZZZZ";
+    private static String integrationHost = "localhost";
+    private static String integrationPort = "8080";
 
     //Helpers
     private static String empty = "empty";
@@ -47,13 +50,16 @@ public class BatchFactory {
         //Load batch info
         collectionId = StringUtils.defaultIfEmpty(RequestFactory.collectionId, "XXXXXXXXXX");
         subscriptionId = StringUtils.defaultIfEmpty(RequestFactory.subsIdCreate, "ZZZZZZZZZZ");
+        integrationHost = StringUtils.defaultIfEmpty(RequestFactory.integrationHost, "localhost");
+        integrationPort = StringUtils.defaultIfEmpty(String.valueOf(RequestFactory.integrationPort), "8080");
+        integrationId = StringUtils.defaultIfEmpty(IntegrationTest.IntegrationId.toString(), "XXXXXXXXXX");
 
         String requestBody;
         JSONObject fullBatch = new JSONObject();
         fullBatch.put("batchNumber", 0);
         fullBatch.put("totalBatches", 1);
-        fullBatch.put("targetUrl", RequestFactory.integrationHost.concat(":").concat(String.valueOf(RequestFactory.integrationPort))
-                .concat("/integrations/").concat(IntegrationTest.IntegrationId.toString()).concat("/items"));
+        fullBatch.put("targetUrl", integrationHost.concat(":").concat(integrationPort)
+                .concat("/integrations/").concat(integrationId).concat("/items"));
         fullBatch.put("createdAt", Instant.now().toString());
         fullBatch.put("eventName", "product.created");
         fullBatch.put("organizationId", organizationId);

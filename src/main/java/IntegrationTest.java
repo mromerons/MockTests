@@ -47,6 +47,8 @@ public class IntegrationTest {
         mapFetchFirstBatch("FETCH_FIRST_BATCH", mockServer);     //FETCH FIRST BATCH
         mapNotification("NOTIFICATION", mockServer);     //NOTIFICATION
 
+        //mapShopify("SHOPIFY", mockServer);     //NOTIFICATION
+
         //JUST FOR TEST PURPOSES
         while (true) {
             Thread.sleep(1000L);
@@ -125,6 +127,21 @@ public class IntegrationTest {
                         request()
                                 .withMethod("POST")
                                 .withPath("/api/notifications/".concat(venzeeStoreName).concat("/"))
+                        ,
+                        unlimited()
+                )
+                .callback(
+                        callback()
+                                .withCallbackClass(NotificationCallback.class.getName())
+                );
+    }
+
+    private void mapShopify(final String operation, MockServerClient client) throws IOException {
+        client
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/")
                         ,
                         unlimited()
                 )
